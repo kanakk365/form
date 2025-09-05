@@ -49,6 +49,34 @@ type ApiResponse = {
   };
 };
 
+type RegistrationSuccessResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    id: number;
+    name: string;
+    phone: string;
+    email: string;
+    affiliation: string;
+    roleName: string;
+    uniqueDandiyaId: string;
+    createdAt: string;
+    updatedAt: string;
+    d1L2MemberId: number | null;
+    d2L2MemberId: number | null;
+    d1L2Member: {
+      id: number;
+      name: string;
+      uniqueDandiyaId: string;
+      affiliation: string;
+    } | null;
+    d2L2Member: null;
+  };
+  meta: {
+    timestamp: string;
+  };
+};
+
 export default function Home() {
   const [formData, setFormData] = useState<L1RegistrationPayload>({
     name: "",
@@ -63,6 +91,7 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [successData, setSuccessData] = useState<RegistrationSuccessResponse['data'] | null>(null);
 
   // API data and selection states
   const [l4Members, setL4Members] = useState<L4Member[]>([]);
@@ -75,6 +104,7 @@ export default function Home() {
       const timer = setTimeout(() => {
         setIsSuccess(false);
         setError(null); // Also clear any errors
+        setSuccessData(null); // Clear success data
       }, 5000);
 
       return () => clearTimeout(timer);
@@ -154,17 +184,17 @@ export default function Home() {
         }
       );
 
-      const data: unknown = await response.json().catch(() => null);
+      const data: RegistrationSuccessResponse = await response.json();
 
       if (!response.ok) {
         let message = "Request failed";
-        if (data && typeof data === "object") {
-          const maybeMessage = (data as { message?: unknown }).message;
-          if (typeof maybeMessage === "string") message = maybeMessage;
+        if (data && typeof data === "object" && "message" in data) {
+          message = data.message;
         }
         throw new Error(message);
       }
 
+      setSuccessData(data.data);
       setIsSuccess(true);
     } catch (err: unknown) {
       setError(getErrorMessage(err));
@@ -187,9 +217,17 @@ export default function Home() {
               ✓
             </div>
             <h1 className="text-2xl font-semibold mb-2">Success</h1>
-            <p className="text-gray-700">
-              Your registration has been submitted.
+            <p className="text-gray-700 mb-4">
+              Your registration has been submitted successfully.
             </p>
+            {successData && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <h2 className="text-lg font-medium text-blue-900 mb-2">Your L1 ID</h2>
+                <p className="text-2xl font-bold text-blue-600 font-mono">
+                  {successData.uniqueDandiyaId}
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <>
