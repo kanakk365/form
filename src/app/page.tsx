@@ -1,103 +1,386 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+
+type L1RegistrationPayload = {
+  name: string;
+  phone: string;
+  email: string;
+  affiliation: string;
+  roleName: string;
+  l2MemberId: number;
+  l2MemberType: "D1" | "D2";
+};
+
+type L2Member = {
+  id: number;
+  name: string;
+  phone: string;
+  email: string;
+  affiliation: string;
+  uniqueDandiyaId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type L4Member = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  uniqueDandiyaId: string;
+  createdAt: string;
+  updatedAt: string;
+  l2Members: L2Member[];
+  l2MembersCount: number;
+};
+
+type ApiResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    l4Members: L4Member[];
+    totalL4Members: number;
+    totalL2Members: number;
+  };
+  meta: {
+    timestamp: string;
+    count: number;
+  };
+};
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [formData, setFormData] = useState<L1RegistrationPayload>({
+    name: "",
+    phone: "",
+    email: "",
+    affiliation: "",
+    roleName: "Event Coordinator",
+    l2MemberId: 5,
+    l2MemberType: "D1",
+  });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  // API data and selection states
+  const [l4Members, setL4Members] = useState<L4Member[]>([]);
+  const [selectedL4Member, setSelectedL4Member] = useState<L4Member | null>(null);
+  const [selectedL2Member, setSelectedL2Member] = useState<L2Member | null>(null);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+
+  useEffect(() => {
+    if (isSuccess) {
+      const timer = setTimeout(() => {
+        setIsSuccess(false);
+        setError(null); // Also clear any errors
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isSuccess]);
+
+  function getErrorMessage(err: unknown): string {
+    if (err instanceof Error) return err.message;
+    if (typeof err === "string") return err;
+    return "Something went wrong";
+  }
+
+  const fetchMembers = useCallback(async (type: "D1" | "D2") => {
+    setIsLoadingMembers(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `https://scpapi.elitceler.com/api/v1/${type.toLowerCase()}/l4-members`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${type} members`);
+      }
+
+      const data: ApiResponse = await response.json();
+      setL4Members(data.data.l4Members);
+      setSelectedL4Member(null);
+      setSelectedL2Member(null);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
+      setL4Members([]);
+    } finally {
+      setIsLoadingMembers(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMembers(formData.l2MemberType);
+  }, [formData.l2MemberType, fetchMembers]);
+
+  useEffect(() => {
+    if (selectedL2Member) {
+      setFormData((prev) => ({
+        ...prev,
+        name: selectedL2Member.name,
+        phone: selectedL2Member.phone,
+        email: selectedL2Member.email,
+        affiliation: selectedL2Member.affiliation,
+        l2MemberId: selectedL2Member.id,
+      }));
+    }
+  }, [selectedL2Member]);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    // Validate that an L2 member is selected
+    if (!selectedL2Member) {
+      setError("Please select an L2 member before submitting.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const payload: L1RegistrationPayload = { ...formData, l2MemberId: selectedL2Member.id };
+
+      const response = await fetch(
+        "https://scpapi.elitceler.com/api/v1/l1-members/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data: unknown = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        let message = "Request failed";
+        if (data && typeof data === "object") {
+          const maybeMessage = (data as { message?: unknown }).message;
+          if (typeof maybeMessage === "string") message = maybeMessage;
+        }
+        throw new Error(message);
+      }
+
+      setIsSuccess(true);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div
+      className="min-h-screen w-full flex items-center justify-center p-6 text-white"
+      style={{
+        background: "linear-gradient(180deg, #297AE0 0%, #0054BE 100%)",
+      }}
+    >
+      <div className="w-full max-w-md bg-white rounded-lg p-6 shadow-xl text-gray-900">
+        {isSuccess ? (
+          <div className="text-center py-8">
+            <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-2xl">
+              ✓
+            </div>
+            <h1 className="text-2xl font-semibold mb-2">Success</h1>
+            <p className="text-gray-700">
+              Your registration has been submitted.
+            </p>
+          </div>
+        ) : (
+          <>
+            <h1 className="text-2xl font-semibold mb-4">L1 Registration</h1>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1 text-gray-700"
+                  htmlFor="name"
+                >
+                  Name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#297AE0] focus:border-transparent"
+                  placeholder="John Doe"
+                />
+              </div>
+
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1 text-gray-700"
+                  htmlFor="phone"
+                >
+                  Phone number
+                </label>
+                <input
+                  id="phone"
+                  type="tel"
+                  required
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, phone: e.target.value }))
+                  }
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#297AE0] focus:border-transparent"
+                  placeholder="9876543210"
+                />
+              </div>
+
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1 text-gray-700"
+                  htmlFor="email"
+                >
+                  Mail id
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, email: e.target.value }))
+                  }
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#297AE0] focus:border-transparent"
+                  placeholder="john.doe@example.com"
+                />
+              </div>
+
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1 text-gray-700"
+                  htmlFor="affiliation"
+                >
+                  Affiliation name
+                </label>
+                <input
+                  id="affiliation"
+                  type="text"
+                  required
+                  value={formData.affiliation}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      affiliation: e.target.value,
+                    }))
+                  }
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#297AE0] focus:border-transparent"
+                  placeholder="ABC University"
+                />
+              </div>
+
+              {/* roleName is fixed in payload; hidden from user */}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label
+                    className="block text-sm font-medium mb-1 text-gray-700"
+                    htmlFor="l2MemberType"
+                  >
+                    L2 Member Type
+                  </label>
+                  <select
+                    id="l2MemberType"
+                    value={formData.l2MemberType}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        l2MemberType: e.target.value as "D1" | "D2",
+                      }))
+                    }
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#297AE0] focus:border-transparent"
+                  >
+                    <option value="D1">D1</option>
+                    <option value="D2">D2</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* L4 Member Selection */}
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1 text-gray-700"
+                  htmlFor="l4Member"
+                >
+                  Select L4 Member
+                </label>
+                {isLoadingMembers ? (
+                  <div className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-gray-500">
+                    Loading members...
+                  </div>
+                ) : (
+                  <select
+                    id="l4Member"
+                    value={selectedL4Member?.id || ""}
+                    onChange={(e) => {
+                      const memberId = parseInt(e.target.value);
+                      const member = l4Members.find(m => m.id === memberId);
+                      setSelectedL4Member(member || null);
+                      setSelectedL2Member(null);
+                    }}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#297AE0] focus:border-transparent"
+                  >
+                    <option value="">Select an L4 member...</option>
+                    {l4Members.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.name} ({member.uniqueDandiyaId}) - {member.l2MembersCount} L2 members
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {/* L2 Member Selection */}
+              {selectedL4Member && selectedL4Member.l2Members.length > 0 && (
+                <div>
+                  <label
+                    className="block text-sm font-medium mb-1 text-gray-700"
+                    htmlFor="l2Member"
+                  >
+                    Select L2 Member
+                  </label>
+                  <select
+                    id="l2Member"
+                    value={selectedL2Member?.id || ""}
+                    onChange={(e) => {
+                      const memberId = parseInt(e.target.value);
+                      const member = selectedL4Member.l2Members.find(m => m.id === memberId);
+                      setSelectedL2Member(member || null);
+                    }}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#297AE0] focus:border-transparent"
+                  >
+                    <option value="">Select an L2 member...</option>
+                    {selectedL4Member.l2Members.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.name} ({member.affiliation}) - {member.uniqueDandiyaId}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full text-white rounded-md px-4 py-2 disabled:opacity-60 bg-gradient-to-r from-[#297AE0] to-[#0054BE] shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-white"
+              >
+                {isSubmitting ? "Submitting..." : "Submit"}
+              </button>
+            </form>
+
+            {error && <div className="mt-4 text-red-600 text-sm">{error}</div>}
+          </>
+        )}
+      </div>
     </div>
   );
 }
