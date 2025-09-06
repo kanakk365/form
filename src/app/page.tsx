@@ -367,7 +367,7 @@ export default function Home() {
                     className="block text-sm font-medium mb-1 text-gray-700"
                     htmlFor="l2MemberType"
                   >
-                    L2 Member Type
+                    Select L2 Member Type
                   </label>
                   <select
                     id="l2MemberType"
