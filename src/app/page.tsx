@@ -91,12 +91,18 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [successData, setSuccessData] = useState<RegistrationSuccessResponse['data'] | null>(null);
+  const [successData, setSuccessData] = useState<
+    RegistrationSuccessResponse["data"] | null
+  >(null);
 
   // API data and selection states
   const [l4Members, setL4Members] = useState<L4Member[]>([]);
-  const [selectedL4Member, setSelectedL4Member] = useState<L4Member | null>(null);
-  const [selectedL2Member, setSelectedL2Member] = useState<L2Member | null>(null);
+  const [selectedL4Member, setSelectedL4Member] = useState<L4Member | null>(
+    null
+  );
+  const [selectedL2Member, setSelectedL2Member] = useState<L2Member | null>(
+    null
+  );
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
   useEffect(() => {
@@ -171,7 +177,10 @@ export default function Home() {
     }
 
     try {
-      const payload: L1RegistrationPayload = { ...formData, l2MemberId: selectedL2Member.id };
+      const payload: L1RegistrationPayload = {
+        ...formData,
+        l2MemberId: selectedL2Member.id,
+      };
 
       const response = await fetch(
         "https://scpapi.elitceler.com/api/v1/l1-members/register",
@@ -222,7 +231,9 @@ export default function Home() {
             </p>
             {successData && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                <h2 className="text-lg font-medium text-blue-900 mb-2">Your L1 ID</h2>
+                <h2 className="text-lg font-medium text-blue-900 mb-2">
+                  Your L1 ID
+                </h2>
                 <p className="text-2xl font-bold text-blue-600 font-mono">
                   {successData.uniqueDandiyaId}
                 </p>
@@ -337,8 +348,8 @@ export default function Home() {
                     }
                     className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#297AE0] focus:border-transparent"
                   >
-                    <option value="D1">D1</option>
-                    <option value="D2">D2</option>
+                    <option value="D1">D1 - Navratri Nirvana</option>
+                    <option value="D2">D2 - Navratri Mahotsav</option>
                   </select>
                 </div>
               </div>
@@ -361,7 +372,7 @@ export default function Home() {
                     value={selectedL4Member?.id || ""}
                     onChange={(e) => {
                       const memberId = parseInt(e.target.value);
-                      const member = l4Members.find(m => m.id === memberId);
+                      const member = l4Members.find((m) => m.id === memberId);
                       setSelectedL4Member(member || null);
                       setSelectedL2Member(null);
                     }}
@@ -370,7 +381,8 @@ export default function Home() {
                     <option value="">Select an L4 member...</option>
                     {l4Members.map((member) => (
                       <option key={member.id} value={member.id}>
-                        {member.name} ({member.uniqueDandiyaId}) - {member.l2MembersCount} L2 members
+                        {member.name} ({member.uniqueDandiyaId}) -{" "}
+                        {member.l2MembersCount} L2 members
                       </option>
                     ))}
                   </select>
@@ -391,7 +403,9 @@ export default function Home() {
                     value={selectedL2Member?.id || ""}
                     onChange={(e) => {
                       const memberId = parseInt(e.target.value);
-                      const member = selectedL4Member.l2Members.find(m => m.id === memberId);
+                      const member = selectedL4Member.l2Members.find(
+                        (m) => m.id === memberId
+                      );
                       setSelectedL2Member(member || null);
                     }}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#297AE0] focus:border-transparent"
@@ -399,7 +413,8 @@ export default function Home() {
                     <option value="">Select an L2 member...</option>
                     {selectedL4Member.l2Members.map((member) => (
                       <option key={member.id} value={member.id}>
-                        {member.name} ({member.affiliation}) - {member.uniqueDandiyaId}
+                        {member.name} ({member.affiliation}) -{" "}
+                        {member.uniqueDandiyaId}
                       </option>
                     ))}
                   </select>
