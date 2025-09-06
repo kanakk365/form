@@ -2,6 +2,29 @@
 
 import { useState, useEffect, useCallback } from "react";
 
+// Affiliation lists for D1 and D2
+const D1_AFFILIATIONS = [
+  "IARE", "GRIET", "CMRCET", "NMIMS", "KMIT", "CBIT", "LORDS", "MAHINDRA", "ST ANNS", "TKR", "SMEC", "VARDHAMAN",
+  "WATER PROJECT", "HYA", "GNITS", "STANLEY", "VASAVI", "JNAFAU", "JOSEPHS", "MLRITM", "OBS", "MRW", "BIET", "VBIT",
+  "I&R", "FRANCIS", "GCET", "VJIT", "CMRIT", "MVSR", "MCET", "SCET", "GNI", "KG REDDY", "CMREC", "MECS", "PAW",
+  "ST MARY'S", "BHAVANS", "NNRG", "GITAM", "CVR", "NMREC", "BADRUKA", "SVIT", "HITAM", "PRIDE", "VNRVJIET", "AVINASH",
+  "AURORA UNIVERSITY", "ST PIOUS", "SNIST", "SREYAS", "VVSB", "MALLAREDDY UNIVERSITY", "EFORCE", "ICFAI", "JNTU", "MGIT",
+  "CARE", "KLU", "MREC", "AMITY", "ANURAG", "CMRTC", "BVRIT", "ROOTS", "WOXSEN", "NGIT", "ORIGINATE", "HCU", "GOLD",
+  "VEC", "KU", "VDC", "KITSW", "MASTERJI", "AVINASH", "SRU", "SRITW", "NITW", "ARTS & SCIENCE COLLEGE", "KITS-SINGAPUR",
+  "SVS", "NEW SCIENCE", "BITS", "JAYAMUKHI", "TALLA PADMAVATHI"
+];
+
+const D2_AFFILIATIONS = [
+  "IARE", "GRIET", "CMRCET", "NMIMS", "KMIT", "CBIT", "LORDS", "MAHINDRA", "ST ANNS", "TKR", "SMEC", "VARDHAMAN",
+  "WATER PROJECT", "HYA", "GNITS", "STANLEY", "VASAVI", "JNAFAU", "JOSEPHS", "MLRITM", "OBS", "MRW", "BIET", "VBIT",
+  "I&R", "FRANCIS", "GCET", "VJIT", "CMRIT", "MVSR", "MCET", "SCET", "GNI", "KG REDDY", "CMREC", "MECS", "PAW",
+  "ST MARY'S", "BHAVANS", "NNRG", "GITAM", "CVR", "NMREC", "BADRUKA", "SVIT", "HITAM", "PRIDE", "VNRVJIET", "AVINASH",
+  "AURORA UNIVERSITY", "ST PIOUS", "SNIST", "SREYAS", "VVSB", "MALLAREDDY UNIVERSITY", "EFORCE", "ICFAI", "JNTU", "MGIT",
+  "CARE", "KLU", "MREC", "AMITY", "ANURAG", "CMRTC", "BVRIT", "ROOTS", "WOXSEN", "NGIT", "ORIGINATE", "HCU", "GOLD",
+  "VEC", "KU", "VDC", "KITSW", "MASTERJI", "AVINASH", "SRU", "SRITW", "NITW", "ARTS & SCIENCE COLLEGE", "KITS-SINGAPUR",
+  "SVS", "NEW SCIENCE", "BITS", "JAYAMUKHI", "TALLA PADMAVATHI"
+];
+
 type L1RegistrationPayload = {
   name: string;
   phone: string;
@@ -155,14 +178,18 @@ export default function Home() {
     if (selectedL2Member) {
       setFormData((prev) => ({
         ...prev,
-        name: selectedL2Member.name,
-        phone: selectedL2Member.phone,
-        email: selectedL2Member.email,
-        affiliation: selectedL2Member.affiliation,
         l2MemberId: selectedL2Member.id,
       }));
     }
   }, [selectedL2Member]);
+
+  // Clear affiliation when switching between D1 and D2
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      affiliation: "",
+    }));
+  }, [formData.l2MemberType]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -311,9 +338,8 @@ export default function Home() {
                 >
                   Affiliation name
                 </label>
-                <input
+                <select
                   id="affiliation"
-                  type="text"
                   required
                   value={formData.affiliation}
                   onChange={(e) =>
@@ -322,9 +348,15 @@ export default function Home() {
                       affiliation: e.target.value,
                     }))
                   }
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#297AE0] focus:border-transparent"
-                  placeholder="ABC University"
-                />
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#297AE0] focus:border-transparent"
+                >
+                  <option value="">Select an affiliation...</option>
+                  {(formData.l2MemberType === "D1" ? D1_AFFILIATIONS : D2_AFFILIATIONS).map((affiliation) => (
+                    <option key={affiliation} value={affiliation}>
+                      {affiliation}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* roleName is fixed in payload; hidden from user */}
