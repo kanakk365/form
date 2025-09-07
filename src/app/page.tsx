@@ -128,17 +128,22 @@ export default function Home() {
   );
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
-  useEffect(() => {
-    if (isSuccess) {
-      const timer = setTimeout(() => {
-        setIsSuccess(false);
-        setError(null); // Also clear any errors
-        setSuccessData(null); // Clear success data
-      }, 5000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isSuccess]);
+  const resetForm = () => {
+    setIsSuccess(false);
+    setError(null);
+    setSuccessData(null);
+    setSelectedL4Member(null);
+    setSelectedL2Member(null);
+    setFormData({
+      name: "",
+      phone: "",
+      email: "",
+      affiliation: "",
+      roleName: "Event Coordinator",
+      l2MemberId: 5,
+      l2MemberType: "D1",
+    });
+  };
 
   function getErrorMessage(err: unknown): string {
     if (err instanceof Error) return err.message;
@@ -257,7 +262,7 @@ export default function Home() {
               Your registration has been submitted successfully.
             </p>
             {successData && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <h2 className="text-lg font-medium text-blue-900 mb-2">
                   Your L1 ID
                 </h2>
@@ -266,6 +271,12 @@ export default function Home() {
                 </p>
               </div>
             )}
+            <button
+              onClick={resetForm}
+              className="w-full text-white rounded-md px-4 py-2 bg-gradient-to-r from-[#297AE0] to-[#0054BE] shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-white"
+            >
+              Register Another L1 Member
+            </button>
           </div>
         ) : (
           <>
